@@ -97,7 +97,9 @@ Terraform will automatically:
 # 5. Access the Application
 
 Open the External ALB DNS:
+```bash
 http://<external-alb-dns>/admin/
+```
 
 # 6. Login using the credentials emailed to you.
 
