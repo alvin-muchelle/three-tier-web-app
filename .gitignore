@@ -1,0 +1,16 @@
+# Ignore Terraform state files
+*.tfstate
+*.tfstate.backup
+
+# Ignore Terraform working directory
+.terraform/
+
+# Ignore private key files
+*.pem
+
+# Python cache files (optional, in case your project grows)
+__pycache__/
+*.pyc
+
+# Ignore secret environment files (optional if you ever create .env files manually)
+.env
