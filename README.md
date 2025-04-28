@@ -65,7 +65,7 @@ Application health monitored using ALB health checks
 # 1. Clone this repository
 
 ```bash
-git clone <link to this repo>
+git clone https://github.com/alvin-muchelle/three-tier-web-app
 cd your-repo
 ```
 
