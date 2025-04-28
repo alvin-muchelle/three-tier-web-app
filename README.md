@@ -1,5 +1,5 @@
 ## **Project Overview**
-Deploy a Django Admin web application on AWS using Terraform.
+Deploy a Django Admin web application hosted on AWS using Terraform.
 
 ## **Architecture**
 Web Tier: External Application Load Balancer (ALB) routing to Web EC2 instances in an Auto Scaling Group (ASG)
