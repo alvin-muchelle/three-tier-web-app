@@ -64,8 +64,10 @@ Application health monitored using ALB health checks
 
 # 1. Clone this repository
 
+```bash
 git clone <link to this repo>
 cd your-repo
+```
 
 # 2. Prepare your environment
 
@@ -74,8 +76,11 @@ Install and configure the AWS CLI
 
 # 3. Run the Deployment Script
 
+```bash
 chmod +x deploy.sh
 ./deploy.sh
+```
+
 You will be prompted to enter:
 
 Your email address to receive login details (via SNS)
