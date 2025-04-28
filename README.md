@@ -1,7 +1,7 @@
-Project Overview
+## **Project Overview**
 Deploy a Django Admin web application on AWS using Terraform.
 
-Architecture
+## **Architecture**
 Web Tier: External Application Load Balancer (ALB) routing to Web EC2 instances in an Auto Scaling Group (ASG)
 
 App Tier: Internal ALB routing from Web EC2s to an ASG of Django App EC2 instances.
@@ -14,8 +14,7 @@ Logging: Admin and database login credentials securely captured and output
 
 Notifications: Amazon SNS sends the login information via email
 
-
-Features
+## **Features**
 Full Infrastructure as Code using Terraform
 
 Dynamic secrets creation if they don't exist already
@@ -35,7 +34,7 @@ Static files collection handled automatically
 Application health monitored using ALB health checks
 
 
-📁 Folder Structure
+## 📁 **Folder Structure**
 .
 ├── README.md                    # Project documentation (this file)
 ├── deploy.sh                     # Full deployment wrapper script
@@ -61,19 +60,19 @@ Application health monitored using ALB health checks
 │   └── web.sh                    # Web EC2 bootstrap script (Nginx)
 
 
-How to Deploy
+## **How to Deploy**
 
-1. Clone this repository
+# 1. Clone this repository
 
 git clone <link to this repo>
 cd your-repo
 
-2. Prepare your environment
+# 2. Prepare your environment
 
 Install Terraform
 Install and configure the AWS CLI
 
-3. Run the Deployment Script
+# 3. Run the Deployment Script
 
 chmod +x deploy.sh
 ./deploy.sh
@@ -81,7 +80,7 @@ You will be prompted to enter:
 
 Your email address to receive login details (via SNS)
 
-4. Wait for Infrastructure to Deploy
+# 4. Wait for Infrastructure to Deploy
 
 Terraform will automatically:
     Create all required resources
@@ -90,15 +89,15 @@ Terraform will automatically:
     Initialize your Django application
     Send Admin login details to your email via SNS
 
-5. Access the Application
+# 5. Access the Application
 
 Open the External ALB DNS:
 http://<external-alb-dns>/admin/
 
-6. Login using the credentials emailed to you.
+# 6. Login using the credentials emailed to you.
 
 
-Technologies Used
+## **Technologies Used**
 
 Amazon EC2 (Elastic Compute Cloud) running on Amazon Linux 2
 
