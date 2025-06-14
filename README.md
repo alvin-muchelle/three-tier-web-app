@@ -1,129 +1,138 @@
-## **Project Overview**
-Deploy a Django Admin web application hosted on AWS using Terraform.
+---
 
-## **Architecture**
-Web Tier: External Application Load Balancer (ALB) routing to Web EC2 instances in an Auto Scaling Group (ASG)
+## 🛠️ Deployment Architecture (EC2 + Nginx + Gunicorn + Django)
 
-App Tier: Internal ALB routing from Web EC2s to an ASG of Django App EC2 instances.
+This project is deployed on an Amazon EC2 instance using a **three-tier architecture**:
 
-Database Tier: Amazon RDS PostgreSQL instances
+1. **Web Tier:** Nginx (Reverse Proxy)
+2. **Application Tier:** Django (running on Gunicorn)
+3. **Data Tier:** PostgreSQL (RDS)
 
-Secrets Management: AWS Secrets Manager for securely storing DB credentials and Django secret key
+---
 
-Logging: Admin and database login credentials securely captured and output
+### 🔗 Component Overview
 
-Notifications: Amazon SNS sends the login information via email
+| Layer       | Component            | Role                                                          |
+| ----------- | -------------------- | ------------------------------------------------------------- |
+| Web Tier    | **Nginx**            | Handles HTTP requests, reverse-proxies to the app layer       |
+| App Tier    | **Gunicorn**         | WSGI server that runs the Django app                          |
+| Logic Layer | **Django**           | Core backend logic, routing, API, templates, and DB access    |
+| Data Tier   | **PostgreSQL (RDS)** | Stores app data like mothers, babies, reminders, and schedule |
 
-## **Features**
-Full Infrastructure as Code using Terraform
+---
 
-Dynamic secrets creation if they don't exist already
+### ⚙️ How It Works
 
-Auto-fetch RDS Database secrets and Django Secret Key at EC2 instance boot time
+#### 1. **Nginx** (Port `80`)
 
-Django Admin Panel preloaded with a Superuser account
+* Acts as the entry point to the system.
+* Forwards HTTP requests to an internal ALB DNS or directly to Gunicorn.
+* Configured via `/etc/nginx/conf.d/reverse-proxy.conf`.
 
-Secure password generation and management
-
-Rolling deployments through Auto Scaling Groups
-
-Automated Django database migrations
-
-Static files collection handled automatically
-
-Application health monitored using ALB health checks
-
-
-## 📁 **Folder Structure**
-.
-├── README.md                    # Project documentation (this file)
-├── deploy.sh                     # Full deployment wrapper script
-├── setup.sh                      # Initial folder setup script
-├── send_login_details.sh         # Script to send credentials via SNS
-├── main.tf                       # Root Terraform config
-├── app.tf                        # App Tier resources (App ALB, ASG, Launch Template)
-├── web.tf                        # Web Tier resources (Web ALB, Web EC2)
-├── rds.tf                        # Database Tier (RDS PostgreSQL)
-├── vpc.tf                        # VPC and Subnets setup
-├── security_groups.tf            # Security Groups for all tiers
-├── ec2-roles.tf                  # IAM Roles and Instance Profiles
-├── lamda-role.tf                 # (Optional) Lambda IAM Role (for future extension)
-├── sns-topic.tf                  # SNS Topic and Subscription for notifications
-├── send-login-details.tf         # Lambda & IAM setup to send email notifications
-├── secrets.tf                    # Secrets Manager resources (RDS and Django secrets)
-├── patch_secret.tf               # Patch RDS secret with dynamic DB host
-├── outputs-app-login.tf          # Outputs for Admin Panel and Database Login
-├── locals.tf                     # Local variables for public and private subnets
-├── variables.tf                  # Input variables
-├── user_data/                    # EC2 User Data scripts
-│   ├── app.sh                    # App EC2 bootstrap script (Django + Gunicorn)
-│   └── web.sh                    # Web EC2 bootstrap script (Nginx)
-
-
-## **How to Deploy**
-
-### 1. Clone this repository
-
-```bash
-git clone https://github.com/alvin-muchelle/three-tier-web-app
-cd your-repo
+```nginx
+location / {
+    proxy_pass http://${internal_alb_dns};
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
 ```
 
-### 2. Prepare your environment
+#### 2. **Gunicorn** (Port `8000`)
 
-Install Terraform
-Install and configure the AWS CLI
-
-### 3. Run the Deployment Script
+* Production-grade WSGI server that loads the Django app.
+* Managed by `systemd` (`gunicorn.service`), set to auto-start and auto-restart.
 
 ```bash
-chmod +x deploy.sh
-./deploy.sh
+ExecStart=/home/ec2-user/employee_management/venv/bin/gunicorn \
+  --bind 0.0.0.0:8000 employee_management.wsgi:application
 ```
 
-You will be prompted to enter:
+#### 3. **Django**
 
-Your email address to receive login details (via SNS)
+* Python-based web framework that handles:
 
-### 4. Wait for Infrastructure to Deploy
+  * URL routing
+  * Request/response logic
+  * Database interaction
+  * Admin dashboard
+* Loads secrets from AWS Secrets Manager (e.g., DB credentials, Django secret key).
+* Renders views like:
 
-Terraform will automatically:
-    Create all required resources
-    Set up secrets
-    Launch EC2 instances
-    Initialize your Django application
-    Send Admin login details to your email via SNS
+  * `/` – homepage
+  * `/health/` – health check endpoint
+* Writes secrets to a `.env` file which Django reads using `python-dotenv`.
 
-### 5. Access the Application
+#### 4. **PostgreSQL (RDS)**
 
-Open the External ALB DNS:
-```bash
-http://<external-alb-dns>/admin/
+* Stores structured data.
+* Credentials (host, dbname, user, password) are pulled securely from Secrets Manager.
+
+---
+
+### 🧪 Health Check
+
+* Health check endpoint for load balancer:
+
+  ```
+  GET /health/
+  ```
+
+  Returns: `200 OK`
+
+---
+
+### 🔐 Security and Secrets
+
+* **Secrets are managed in AWS Secrets Manager**, including:
+
+  * `psql-rds-credentials` (DB login)
+  * `django-secret-key` (SECRET\_KEY)
+
+These are fetched and written to `.env`, which is loaded by Django using `load_dotenv`.
+
+---
+
+### 🚀 Deployment Steps Summary
+
+The EC2 `User Data` script:
+
+1. Installs Python, PostgreSQL client, and dependencies.
+2. Installs Django + Gunicorn in a Python virtual environment.
+3. Fetches secrets and writes a `.env` file.
+4. Sets up Django project and migrations.
+5. Starts Gunicorn as a systemd service.
+6. Installs Nginx and configures it to reverse proxy to Gunicorn.
+7. Starts Nginx.
+
+---
+
+### 🗺️ Request Lifecycle
+
+```text
+Client Request (HTTP)
+        │
+        ▼
+     [ Nginx ]
+        │
+        ▼
+   [ ALB or localhost ]
+        │
+        ▼
+    [ Gunicorn ]
+        │
+        ▼
+     [ Django ]
+        │
+        ▼
+  [ PostgreSQL (RDS) ]
 ```
 
-### 6. Login using the credentials emailed to you.
+* Nginx receives the request on port `80`.
+* It proxies the request to Gunicorn on port `8000`.
+* Gunicorn invokes the Django app via WSGI.
+* Django processes the request, fetches any data it needs from PostgreSQL.
+* Response flows back up the stack to the client.
 
-
-## **Technologies Used**
-
-Amazon EC2 (Elastic Compute Cloud) running on Amazon Linux 2
-
-Amazon ALB (Application Load Balancer)
-
-Amazon ASG (Auto Scaling Group)
-
-Amazon RDS for PostgreSQL
-
-AWS Secrets Manager
-
-AWS IAM (Identity and Access Management)
-
-Amazon SNS (Simple Notification Service)
-
-Terraform (Infrastructure as Code)
-
-Django (Python Web Framework)
-
-Gunicorn (Python WSGI HTTP Server)
-
-Nginx Web Server
+---
