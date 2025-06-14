@@ -1,5 +1,3 @@
----
-
 ## 🛠️ Deployment Architecture (EC2 + Nginx + Gunicorn + Django)
 
 This project is deployed on an Amazon EC2 instance using a **three-tier architecture**:
