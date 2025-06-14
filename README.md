@@ -126,4 +126,4 @@ Django (Python Web Framework)
 
 Gunicorn (Python WSGI HTTP Server)
 
-Nginx (Web Server and Gunicorn Proxy)
+Nginx Web Server
